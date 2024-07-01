@@ -1,29 +1,58 @@
-from requests import get
+class Player:
 
-websites = (
-  "google.com",
-  "https://httpstat.us/502",
-  "https://httpstat.us/404",
-  "https://httpstat.us/300",
-  "https://httpstat.us/200",
-  "https://httpstat.us/101"
-)
+  def __init__(self, name, team):
+    self.name = name
+    self.xp = 1500
+    self.team = team
 
-results = {}
+  def introduce(self):
+    print(f"Hello! I'm {self.name} and I play for {self.team}")
 
-for website in websites:
-  if not website.startswith("https://"):
-    website = f"https://{website}"
-  response = get(website)
-  if response.status_code >= 500:
-    results[website] = "SERVER ERROR"
-  elif response.status_code >= 400:
-    results[website] = "CLIENT ERROR"
-  elif response.status_code >= 300:
-    results[website] = "REDIRECT"
-  elif response.status_code >= 200:
-    results[website] = "OK"
-  elif response.status_code >= 100:
-    results[website] = "INFORMATION"
 
-print(results)
+class Team:
+
+  def __init__(self, team_name):
+    self.team_name = team_name
+    self.players = []
+    self.players_sum_xp = 0
+
+  def show_players(self):
+    for player in self.players:
+      player.introduce()
+
+  def add_player(self, player_name):
+    new_player = Player(player_name, self.team_name)
+    self.players.append(new_player)
+
+  def remove_player(self, player_name):
+    for player in self.players:
+      if player.name == player_name:
+        self.players.remove(player)
+        break
+
+  def sum_xp(self):
+    for player in self.players:
+      self.players_sum_xp += player.xp
+    print(
+        f"The Total XP of {self.team_name} Players is {self.players_sum_xp}.")
+
+
+team_a = Team("Team A")
+
+team_a.add_player("Dorj")
+team_a.add_player("Bat")
+
+team_a.show_players()
+
+team_a.remove_player("Bat")
+team_a.show_players()
+
+team_b = Team("Team B")
+
+team_b.add_player("Elbegdorj")
+team_b.add_player("SukhBaatar")
+
+team_b.show_players()
+
+team_a.sum_xp()
+team_b.sum_xp()

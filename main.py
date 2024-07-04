@@ -1,53 +1,57 @@
 import requests
 from bs4 import BeautifulSoup
 
-all_jobs = []
+class JobInfo:
+    def __init__(self, url, position, company, location, salary):
+        self.url = f"https://remoteok.com{url}"
+        self.position = position
+        self.company = company
+        self.location = location
+        self.salary = salary
 
-
-def scrape_page(url):
-    response = requests.get(url)
-
-    soup = BeautifulSoup(
-        response.content,
-        "html.parser",
-    )
-
-    jobs = soup.find("section", class_="jobs").find_all("li")[1:-1]
-
-    for job in jobs:
-        title = job.find("span", class_="title").text
-        job_info = job.find_all("span", class_="company")
-        company = job_info[0].text if len(job_info) > 0 else ""
-        position = job_info[1].text if len(job_info) > 1 else ""
-        region = job_info[2].text if len(job_info) > 2 else ""
-        try:
-            url = job.find("div",
-                           class_="tooltip--flag-logo").next_sibling["href"]
-        except KeyError:
-            url = "You need log-in"
-        job_data = {
-            "title": title,
-            "company": company,
-            "position": position,
-            "region": region,
-            "url": f"https://weworkremotely.com{url}"
+    def __str__(self):
+        return f"Url: {self.url} \n Position: {self.position} \n Company: {self.company} \n Location: {self.location} \n Salary: {self.salary}"
+        
+class JobScraper:
+    def __init__(self, keyword):
+        self.url = f"https://remoteok.com/remote-{keyword}-jobs"
+        self.headers = {
+            "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
         }
-        all_jobs.append(job_data)
+        self.jobs = []
+
+    def print_jobs(self):
+        response = requests.get(self.url, headers=self.headers)
+        soup = BeautifulSoup(response.content, "html.parser")
+        job_elements = soup.find_all("td", class_="company_and_position")[1:]
+
+        for job_element in job_elements:
+            url = job_element.find("a")["href"]
+            position = job_element.find("h2", itemprop="title").text.strip()
+            company = job_element.find("h3", itemprop="name").text.strip()
+            class_location = job_element.find_all("div", class_="location")
+            location = class_location[0].text.strip() if len(class_location) > 0 else ""
+            salary = class_location[1].text.strip() if len(class_location) > 1 else ""
+            job = JobInfo(url, position, company, location, salary)
+            self.jobs.append(job)
+
+        print("-" * 20 + f"{keyword}" + "-" * 20)
+        for job in self.jobs:
+            print(job)
+        print("\n")
+    
+
+keywords = ["flutter", "python", "golang", "c-sharp", "javascript"]
+
+for keyword in keywords:
+    scraper = JobScraper(keyword)
+    scraper.print_jobs()
 
 
-def get_pages(url):
-    response = requests.get(url)
-
-    soup = BeautifulSoup(response.content, "html.parser")
-
-    return len(
-        soup.find("div", class_="pagination").find_all("span", class_="page"))
 
 
-total_pages = get_pages(
-    "https://weworkremotely.com/remote-full-time-jobs?page=1")
 
-for x in range(total_pages):
-    url = f"https://weworkremotely.com/remote-full-time-jobs?page={x+1}"
-    scrape_page(url)
-print(all_jobs)
+
+
+
